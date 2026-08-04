@@ -753,3 +753,52 @@ chmod u+x test.sh
 
 ---
 
+## Docker 설치 및 기본 점검
+Docker 명령어를 사용하기 전에 **OrbStack을 실행**한다.
+
+### Docker 버전 확인
+OrbStack 실행 후 Docker CLI가 정상적으로 동작하는지 확인
+```bash
+docker --version
+```
+* 실행 결과
+```bash
+Docker version 28.5.2, build ecc6942
+```
+
+### Docker Engine 동작 확인
+
+Docker Engine(데몬)이 정상적으로 실행 중인지 확인한다.
+
+#### 실행 명령
+
+```bash
+docker info
+```
+
+#### 실행 결과
+
+```text
+...
+Server:
+ Server Version: 28.5.2
+...
+```
+
+`Server` 정보가 출력되면 Docker Engine이 정상적으로 실행 중인 것을 의미한다.
+
+![도커동작확인](./assets/docker-info.png)
+
+### Docker Context 확인
+(목적)
+OrbStack 사용 시 OrbStack Context가 활성화되었는지 확인
+Docker Desktop 사용 시 적절한 Context가 활성화되었는지 확인
+```bash
+# 현재 Docker Context 확인
+docker context ls
+# 현재 선택된 Context 확인
+docker context show
+```
+![도커context](./assets/docker-context.png)
+---
+
