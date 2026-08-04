@@ -81,6 +81,16 @@ development-workstation/
 
 ## 실행 환경 확인
 
+| 항목 | 값 |
+|------|-----|
+| 운영체제 | macOS Sequoia 15.7.7 |
+| 커널 | Darwin 24.6.0 |
+| CPU 아키텍처 | x86_64 (Intel 64-bit) |
+| 로그인 쉘 | zsh (`/bin/zsh`) |
+| 실행 중인 쉘 | zsh |
+| 터미널 | macOS Terminal |
+| Git | 2.53.0 |
+
 ### 운영체제 확인
 
 * 현재 운영체제를 확인한다.  
@@ -174,3 +184,268 @@ git --version
 ```Bash
 git version 2.53.0
 ```
+
+### Docker 실행 환경 플랫폼
+- Docker desktop: Docker 공식 GUI 프로그램
+- OrbStack: macOS 전용
+- Rancher Desktop
+- Linux + Docker Engine: 리눅스에 Docker Engine만 설치해서 사용
+  
+![OrbStack](/assets/OrbStack.png)
+과제 환경에서는 시슽템 보안 정책상 sudo 권한 사용이 제한 되어있어,
+Docker 직접 설치 및 데몬 제어에 제약이 있어
+과제에 명시되어 있는 대로 **OrbStack**을 활용함
+
+![docker--version](/assets/docker--version.png)
+
+OrbStack 애플리케이션을 실행 후,
+내부 Docker 엔진이 실행 중인지 확인함
+
+> **주의:** Docker Desktop과 OrbStack은 동시에 실행하지 않는다.  
+> 두 프로그램을 동시에 실행하면 Docker CLI가 어느 Docker Engine에 연결되어 있는지 혼동할 수 있으므로, 실습 시에는 하나의 Docker 실행 환경만 사용한다.
+
+
+## 터미너 기본 조작 실습
+| 작업       | 명령어           | 의미                   |
+| -------- | ------------- | -------------------- |
+| 현재 위치 확인 | `pwd`         | 현재 작업 디렉터리의 절대 경로 출력 |
+| 목록 확인    | `ls -la`      | 숨김 파일을 포함한 상세 목록 출력  |
+| 이동       | `cd`          | 다른 디렉터리로 이동          |
+| 디렉터리 생성  | `mkdir`       | 새 디렉터리 생성            |
+| 파일 복사    | `cp`          | 파일 또는 디렉터리 복사        |
+| 이동·이름 변경 | `mv`          | 파일 이동 또는 이름 변경       |
+| 삭제       | `rm`, `rmdir` | 파일 또는 빈 디렉터리 삭제      |
+| 파일 내용 확인 | `cat`         | 파일 전체 내용 출력          |
+| 빈 파일 생성  | `touch`       | 내용이 없는 파일 생성         |
+
+
+### 현재 위치 확인
+
+현재 작업 디렉터리의 절대 경로를 확인한다.
+
+#### 실행 명령
+
+```bash
+pwd
+```
+
+#### 실행 결과
+
+```text
+/Users/chl986398639863/docker-workstation
+```
+
+#### 실행 화면
+
+![pwd 실행 결과](assets/pwd.png)
+  
+### 목록 확인(숨김 파일 포함)
+
+#### 실행 명령
+
+```bash 
+ls -al
+```
+
+#### 실행 결과
+
+```bash
+total 24
+drwxr-xr-x   8 chl986398639863  chl986398639863   256  8  4 11:10 .
+drwxr-x---+ 21 chl986398639863  chl986398639863   672  8  4 09:56 ..
+drwxr-xr-x  12 chl986398639863  chl986398639863   384  8  4 09:54 .git
+-rw-r--r--   1 chl986398639863  chl986398639863  1059  8  4 09:54 .gitignore
+drwxr-xr-x   3 chl986398639863  chl986398639863    96  8  4 09:54 app
+drwxr-xr-x   5 chl986398639863  chl986398639863   160  8  4 11:10 assets
+-rw-r--r--   1 chl986398639863  chl986398639863     0  8  4 09:54 Dockerfile
+-rw-r--r--   1 chl986398639863  chl986398639863  6701  8  4 10:38 README.md
+
+```
+
+#### 실행 화면
+
+![ls-al](./assets/ls-al.png)
+
+### 실습용 디렉터리 생성
+
+#### 실행 명령
+
+```bash
+mkdir terminal-practice
+```
+
+#### 실행 결과
+
+```bash
+ls -al
+drwxr-xr-x   2 chl986398639863  chl986398639863    64  8  4 11:27 terminal-practice
+```
+
+#### 실행 화면
+![mkdir](./assets/mkdir.png)
+
+### 생성한 디렉터리로 이동
+
+#### 실행 명령
+
+```bash
+cd terminal-practice
+```
+
+#### 현재 위치 확인
+
+```bash
+ pwd
+/Users/chl986398639863/docker-workstation/terminal-practice
+```
+
+#### 실행 화면
+![](assets/cd.png)
+
+### 빈 파일 생성
+
+#### 실행 명령
+
+```Bash
+# touch는 파일이 없으면 빈 파일을 생성함
+# (기존 파일 있는 경우 날짜,시간 정보 변경됨)
+touch practice.txt
+```
+
+#### 실행 결과
+
+```bash
+chl986398639863@c5r6s7 docker-workstation % touch practice.txt
+chl986398639863@c5r6s7 docker-workstation % ls
+app			Dockerfile		README.md
+assets			practice.txt		terminal-practice
+```
+
+#### 실행 화면
+![](assets/touch.png)
+
+### 파일에 내용 작성
+
+#### 실행 명령
+
+```bash
+# echo는 기본 문자열 출력 명령이지만,
+# 리다이렉션 기호(>,>>)와 쓰면 파일에 내용을 직접씀
+echo "Docker workstation 연습" > practice.txt
+# >는 덮어씀, >> 는 기존 내용 뒤에 추가
+echo "배고파.." >> practice.txt
+```
+
+#### 실행 결과(파일 내용 확인)
+
+```bash
+# cat 파일 내용 화면에 출력
+cat practice.txt
+Docker workstation 연습
+배고파..
+```
+
+#### 실행 화면
+![echo-cat](./assets/echo-cat.png)
+
+### 파일 복사
+
+#### 실행 명령
+
+```bash
+#cp 원본파일 복사본파일
+# 원본파일 내용을 복사본파일로 복사
+cp practice.txt copycopy.txt
+```
+
+#### 실행 결과
+
+```bash
+chl986398639863@c5r6s7 docker-workstation % ls -al
+total 48
+drwxr-xr-x  11 chl986398639863  chl986398639863   352  8  4 12:43 .
+drwxr-x---+ 21 chl986398639863  chl986398639863   672  8  4 09:56 ..
+drwxr-xr-x  12 chl986398639863  chl986398639863   384  8  4 09:54 .git
+-rw-r--r--   1 chl986398639863  chl986398639863  1059  8  4 09:54 .gitignore
+drwxr-xr-x   3 chl986398639863  chl986398639863    96  8  4 09:54 app
+drwxr-xr-x  10 chl986398639863  chl986398639863   320  8  4 12:42 assets
+-rw-r--r--   1 chl986398639863  chl986398639863    38  8  4 12:43 copycopy.txt
+-rw-r--r--   1 chl986398639863  chl986398639863     0  8  4 09:54 Dockerfile
+-rw-r--r--   1 chl986398639863  chl986398639863    38  8  4 12:34 practice.txt
+-rw-r--r--   1 chl986398639863  chl986398639863  9269  8  4 12:40 README.md
+drwxr-xr-x   2 chl986398639863  chl986398639863    64  8  4 11:27 terminal-practice
+chl986398639863@c5r6s7 docker-workstation % cat copycopy.txt 
+Docker workstation 연습
+배고파..
+```
+
+#### 실행 화면
+![](./assets/cp.png)
+
+### 파일 이름 변경
+#### 실행 명령
+
+```bash
+# 파일 이동이나 파일 변경에 쓰임
+# mv 기존이름 새이름
+mv copycopy.txt rename.txt
+```
+
+#### 실행 결과
+
+```bash
+chl986398639863@c5r6s7 docker-workstation % mv copycopy.txt rename.txt 
+chl986398639863@c5r6s7 docker-workstation % ls    
+app			Dockerfile		README.md		terminal-practice
+assets			practice.txt		rename.txt
+```
+
+#### 실행 화면
+![mvv-rename](./assets/mv-rename.png)
+
+### 파일 이동
+
+#### 실행 명령
+
+```bash
+# mv 이동할파일 목적디렉토리
+mv rename.txt terminal-practice
+```
+
+#### 실행 결과
+
+```bash
+chl986398639863@c5r6s7 docker-workstation % mv rename.txt terminal-practice 
+chl986398639863@c5r6s7 docker-workstation % cd terminal-practice 
+chl986398639863@c5r6s7 terminal-practice % ls
+rename.txt
+```
+
+#### 실행 화면
+
+![파일이동](./assets/mv-directory.png)
+
+### 파일 삭제
+
+#### 실행 명령
+
+```bash
+# rm은 remove의 약자
+# -rf 옵션 주면 폴더 + 하위 파일까지 전부 삭제
+rm terminal-practice/rename.txt
+```
+
+#### 실행 결과
+
+```bash
+chl986398639863@c5r6s7 docker-workstation % rm terminal-practice/rename.txt 
+chl986398639863@c5r6s7 docker-workstation % ls -al terminal-practice 
+total 8
+drwxr-xr-x  3 chl986398639863  chl986398639863   96  8  4 13:02 .
+drwxr-xr-x  9 chl986398639863  chl986398639863  288  8  4 12:54 ..
+-rw-r--r--  1 chl986398639863  chl986398639863   38  8  4 12:34 practice.txt
+```
+
+#### 실행화면
+![rm](./assets/rm.png)
+
