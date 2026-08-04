@@ -18,6 +18,14 @@
 
 -> **재현성** & **개발 환경 격리성**을 갖춘 개발 환경 구축 학습이 목표
 
+ 이 과제를 마친 후, 학습자는 아래를 스스로 설명할 수 있어야 한다.
+> * 절대 경로와 상대 경로의 차이를 예시를 들어 설명할 수 있다.
+>  * 파일 권한의 의미(r/w/x)와 755, 644 같은 표기가 어떤 규칙으로 해석되는지 설명할 수 있다.
+> * 기존 Dockerfile을 기반으로 “커스텀 이미지”를 만들 수 있다.
+> * 포트 매핑이 필요한 이유를 설명할 수 있다.
+> * Docker 볼륨(영속 데이터)을 설명할 수 있다.
+> * Git과 GitHub의 역할 차이(로컬 버전관리 vs 원격 협업 플랫폼)를 설명할 수 있다.
+
 ## 수행 항목 체크리스트
 
 - [x] GitHub에 제출용 Repository를 생성
@@ -238,6 +246,8 @@ pwd
 #### 실행 화면
 
 ![pwd 실행 결과](assets/pwd.png)
+
+---
   
 ### 목록 확인(숨김 파일 포함)
 
@@ -266,6 +276,8 @@ drwxr-xr-x   5 chl986398639863  chl986398639863   160  8  4 11:10 assets
 
 ![ls-al](./assets/ls-al.png)
 
+---
+
 ### 실습용 디렉터리 생성
 
 #### 실행 명령
@@ -284,6 +296,8 @@ drwxr-xr-x   2 chl986398639863  chl986398639863    64  8  4 11:27 terminal-pract
 #### 실행 화면
 ![mkdir](./assets/mkdir.png)
 
+---
+
 ### 생성한 디렉터리로 이동
 
 #### 실행 명령
@@ -301,6 +315,8 @@ cd terminal-practice
 
 #### 실행 화면
 ![](assets/cd.png)
+
+---
 
 ### 빈 파일 생성
 
@@ -323,6 +339,8 @@ assets			practice.txt		terminal-practice
 
 #### 실행 화면
 ![](assets/touch.png)
+
+---
 
 ### 파일에 내용 작성
 
@@ -347,6 +365,8 @@ Docker workstation 연습
 
 #### 실행 화면
 ![echo-cat](./assets/echo-cat.png)
+
+---
 
 ### 파일 복사
 
@@ -382,6 +402,8 @@ Docker workstation 연습
 #### 실행 화면
 ![](./assets/cp.png)
 
+---
+
 ### 파일 이름 변경
 #### 실행 명령
 
@@ -402,6 +424,8 @@ assets			practice.txt		rename.txt
 
 #### 실행 화면
 ![mvv-rename](./assets/mv-rename.png)
+
+---
 
 ### 파일 이동
 
@@ -424,6 +448,8 @@ rename.txt
 #### 실행 화면
 
 ![파일이동](./assets/mv-directory.png)
+
+---
 
 ### 파일 삭제
 
@@ -449,6 +475,8 @@ drwxr-xr-x  9 chl986398639863  chl986398639863  288  8  4 12:54 ..
 #### 실행화면
 ![rm](./assets/rm.png)
 
+---
+
 ## Git 설정 및 GitHub 연동
 
 ### 실행 명령
@@ -470,3 +498,103 @@ rm -rf docker-workstation
 
 #### 실행 화면
 ![git](./assets/git.png)
+
+---
+
+## 절대 경로와 상대 경로 
+절대 경로와 상대 경로의 차이를 예시를 들어 설명하기
+
+### 절대 경로
+절대 경로는 루트 디렉터리(/)부터 시작하는 전체 경로를 의미함
+현재 작업 위치와 관계없이 항상 동일한 위치를 가리킴
+예) 프로젝트가 다음 위치에 있다면
+```text
+/Users/chl986398639863/docker-workstation
+```
+
+`README.md`의 절대 경로는
+
+```text
+/Users/chl986398639863/docker-workstation/README.md
+```
+
+이다.
+
+### 상대경로
+상대 경로는 현재 작업 디렉터리를 기준으로 표현하는 경로
+현재 위치가
+
+```text
+/Users/chl986398639863/docker-workstation
+```
+
+이라면
+
+`README.md`는
+
+```text
+./README.md
+```
+이고,
+
+`app/index.html`은
+
+```text
+./app/index.html
+```
+
+으로 표현할 수 있다.
+
+### 실습
+
+- 현재 위치 확인
+
+```bash
+pwd
+```
+
+- 실행 결과
+
+```text
+/Users/chl986398639863/docker-workstation
+```
+
+- 현재 위치를 기준으로 `app` 디렉터리로 이동
+
+```bash
+cd app
+```
+
+- 현재 위치 확인
+
+```bash
+pwd
+```
+
+- 실행 결과
+
+```text
+/Users/chl986398639863/docker-workstation/app
+```
+
+- 상위 디렉터리로 이동
+
+```bash
+cd ..
+```
+
+- `..`은 상위 디렉터리를 의미한다.
+
+---
+
+### 절대 경로와 상대 경로 비교
+
+| 구분 | 절대 경로 | 상대 경로 |
+|------|----------|----------|
+| 기준 | 루트 디렉터리(`/`) | 현재 작업 디렉터리 |
+| 시작 위치 | `/`부터 시작 | 현재 위치부터 시작 |
+| 예시 | `/Users/chl986398639863/docker-workstation/app/index.html` | `app/index.html` |
+| 특징 | 항상 동일한 위치를 가리킨다. | 현재 위치에 따라 경로가 달라진다. |
+
+---
+
