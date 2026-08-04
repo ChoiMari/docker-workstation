@@ -800,5 +800,208 @@ docker context ls
 docker context show
 ```
 ![도커context](./assets/docker-context.png)
+
 ---
+
+## Docker 기본 운영 명령 수행 & 컨테이너 실행 실습
+
+### Ubuntu 이미지 다운로드
+Docker Hub에서 Ubuntu 이미지를 다운로드
+
+```bash
+docker pull ubuntu
+```
+![도커우분투이미지다운](./assets/docker-pull-ubuntu.png)
+
+### 이미지 목록 확인
+
+```bash
+# 다운로드된 이미지 확인 명령
+docker images
+```
+![도커이미지목록](./assets/docker-images.png)
+
+### hello-world 실행
+
+```bash
+# 도커가 정상 설지, 작동되는지 기본적인 테스트 명령어
+docker run hello-world
+# 실행하면 일어나는 일
+# 1. hello-world 실행해줘
+# 2. hello-world 이미지가 있는지 확인함
+# 3. Docker hub로 요청함 -> 다운로드
+# 4. 이미지 기반으로 컨테이너 생성 및 실행
+# 5. "Hello from Docker" 안내 문구 출력 후 종료
+```
+![도커헬로월드](./assets/docker-hello-world.png)
+
+### Ubuntu 컨테이너 실행
+
+```bash
+# 우분투 이미지로 ubuntu-test라는 새 컨테이너를 생성하고,
+# 터미널 입력이 가능한 bash 셸을 실행해 내부 접속
+docker run -it --name - ubuntu-test ubuntu bash
+
+#docker run 명령은 컨테이너 생성 + 시작
+# 새 컨테이너 생성하고 즉시 실행해라
+# -i 옵션: 컨테이너 표준 입력을 열린 상태로 유지(사용자 키보드 입력 받을 수 있게 함)
+# -t 옵션: 컨테이너 내부에 터미널 화면을 제공함
+# --name: 새로 생성하는 컨테이너 이름 지정
+# (지정하지 않을 시 도커가 임의 부여함)
+# 컨테이너 ID 대신 이 이름을 명령으로 사용할 수 있음
+```
+
+![도커내부컨테이너진입](assets/docker-ubuntu-bash.png)
+
+### 컨테이너 내부 명령
+
+```bash
+# 현재 디렉터리 목록 확인
+ls
+# 문자열 출력
+echo "Hello Docker"
+# 컨테이너 종료
+exit
+```
+![도커컨테이너내부명령](./assets/docker-container.png)
+
+### 실행 중인 컨테이너 확인
+
+```bash
+docker ps
+```
+![실행중인컨테이너](./assets/docker-ps.png)
+
+### 전체 컨테이너 확인
+
+```bash
+# 종료된 컨테이너까지 포함하여 확인함
+docker ps -a
+```
+![전체컨테이너확인](./assets/docker-ps-a.png)
+
+### 컨테이너 다시 시작
+
+```bash
+# docker start 컨테이너이름(또는 컨테이너ID)
+docker start ubuntu-test
+```
+![컨테이너다시시작](assets/docker-start.png)
+
+### attach 실습
+* 종료 시 메인 프로세스를 종료시키면서 밖으로 나옴
+```bash
+# 실행 중인 컨테이너의 메인 프로세스에 밀착(연결)
+# 컨테이너가 원래 실행 중인 화면에 다시 붙는 것
+# 그래서 attach로 내부로 들어가서 exit(종료)하면
+# 메인 프로세스 종료 -> 컨테이너 종료
+docker attach ubuntu-test
+
+```
+
+### exec 실습
+* 종료 시 컨테이너를 끄지 않고 백그라운드에서 계속 돌린 채(유지) 빠져나옴
+```bash
+# 실행 중인 컨테이너 내부에서 새로운 프로세스 실행
+# 실행 중인 컨테이너 안에서 새 명령을 하나 더 실행
+# 이건 새로 만들어서 종료 시키는거라서 메인은 살아있음
+docker exec -it ubuntu-test bash
+```
+
+![어태치-이그젝](./assets/attach-exec.png)
+
+### attach / exec 차이
+* 둘 다 실행 중인 컨테이너 내부로 들어가는 명령이지만 어떻게 들어가느냐 차이가 있음
+* 실무에서는 exec를 많이 사용함
+* 메인으로 붙어서 들어가면 컨테이너 종료,,(-> 서비스 죽음)이라서,,
+* 보통은 컨테이너 안으로 직접 들어가는 자체를 잘 안한다고,,수정 필요하면 Dockerfile 수정, 새 이미지 빌드, 새 컨테이너 배포
+
+```text
+[ attach (앞문) ]                              [ exec (옆문) ]
+  메인 프로세스 화면에 직접 밀착                  독립된 새 터미널(Bash)을 하나 더 생성
+
+┌────────────────────────────┐                ┌────────────────────────────┐
+│ Container                  │                │ Container                  │
+│ ┌────────────────────────┐ │                │ ┌────────────────────────┐ │
+│ │ 메인 프로세스 (PID 1)     │ │                │ │ 메인 프로세스 (PID 1)      │ │
+│ └───────────▲────────────┘ │                │ └────────────────────────┘ │
+│             │              │                │ ┌────────────────────────┐ │
+│         내 터미널            │                │ │ 새 Bash 프로세스          │<── 내 터미널
+└────────────────────────────┘                │ └────────────────────────┘ │
+                                              └────────────────────────────┘
+ (여기서 exit 치면 전체 셧다운!)                    (여기서 exit쳐도 메인은 안 죽음!)
+```
+
+| attach | exec |
+|---------|------|
+| 기존 메인 프로세스에 연결 | 새로운 프로세스를 실행 |
+| 메인 프로세스 종료 시 컨테이너도 종료될 수 있음 | 독립적으로 셸을 실행 |
+| 거의안씀..(학습용) | 가장 많이 사용하는 방식 |
+
+### 로그 확인
+(오류 발생 확인)
+* 컨테이너 안의 로그 파일 아니다..
+* 예) 스프링부트 애플리케이션 log.info("로그인 성공")
+* 콘솔(stdout) 이걸 Docker가 가로채서 Host(Docker 실행하고 있는 컴퓨터, 컨테이너 내부가 아니고,,) Docker 관리 영역에 저장함(컨테이너 삭제시 같이 삭제됨)
+
+```bash
+docker logs ubuntu-test
+```
+![도커로그확인](./assets/docker-logs.png)
+
+### 리소스 확인
+* 컨테이너가 컴퓨터 자원을 얼마나 사용하는지 확인하는 것
+* 실행 중인 컨테이너의 CPU, 메모리, 네트워크 및 디스크 I/O 사용량을 확인한다.
+* 왜 확인? 컨테이너 느린 이유, 죽은 이유, 서버 버벅 이유, 메모리 부족 여부, CPU 과부화 여부 확인용
+* 로컬 개발이나 작은 서버에서 본다고 함
+* 큰 회사는 보통 프로메테우스, 그라파나 같은 모니터링 도구로 본다고,,
+  
+```bash
+docker stats
+```
+
+![컨테이너리소스확인](./assets/docker-stats.png)
+
+```shell
+서비스가 느리다는 신고 들어오면
+docker ps # 컨테이너 살아있니?
+docker logs 컨테이너이름 # 로그 확인
+docker stats 컨테이너이름 # 실시간 자원 사용량 확인
+docker inspect 컨테이너이름 
+# 컨테이너 모든 세부 설정 및 메타 데이터 JSON 형식으로 봄
+```
+
+### docker 디스크 사용량 확인
+* Docker를 오래 사용하면 이미지, 컨테이너, 볼륨, 빌드 캐시 이런게 계속 쌓임 그래서 도커가 용량 얼마나 먹고 있는지 확인함
+```bash
+# df: disk free의 약자
+docker system df
+```
+![도커디스크확인](./assets/docker-system-df.png)
+
+### 컨테이너 중지
+
+```bash
+docker stop ubuntu-test
+```
+![컨테이너중지](assets/docker-stop.png)
+
+### 컨테이너 삭제
+
+```bash
+docker rm ubuntu-test
+```
+
+![컨테이너삭제](./assets/docker-rm.png)
+
+### 이미지 삭제
+* (멈춰있는 컨테이너 포함)해당 이미지로 생성된 컨테이너가
+  단 하나라도 존재하면 이미지 삭제가 안됨
+* 귀찮으면 강제옵션(-f) 사용 -> 컨테이너 연결 끊기 + 이미지 삭제 강제로 한 번에 처리
+```bash
+# docker rmi 이미지명 또는 이미지ID
+docker rmi ubuntu
+```
+
+![이미지삭제](./assets/docker-rmi.png)
 
