@@ -449,3 +449,24 @@ drwxr-xr-x  9 chl986398639863  chl986398639863  288  8  4 12:54 ..
 #### 실행화면
 ![rm](./assets/rm.png)
 
+## Git 설정 및 GitHub 연동
+
+### 실행 명령
+```bash
+# 공용 컴퓨터라서 로컬(Local)설정으로만 함(전역으로 안하고,,)
+git config user.name "GitHub닉네임"
+git config user.email "GitHub이메일"
+
+#확인
+git config --list --local
+
+# 기본 브랜치 설정 명령: 앞으로 git init으로 새 저장소 만들때 기본 브랜치를 main으로 설정
+#(사실 안해도 됨)
+git config init.defaultBranch main
+
+# 과제 제출 후 (프로젝트 삭제하면 로컬 설정도 같이 제거됨)
+rm -rf docker-workstation
+```
+
+#### 실행 화면
+![git](./assets/git.png)
