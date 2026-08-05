@@ -15,12 +15,19 @@
 
     <ul>
         <li>Base image: nginx:alpine</li>
-        <li>Application version: 1.0</li>
+        <li>Application version: 2.0</li>
         <li>Environment: development</li>
     </ul>
 
     <p id="mount-message">
-        This page was copied into the Docker image.
+        This content was updated immediately through a bind mount.
+    </p>
+    <p>
+    바인드 마운트 수정 확인,, <br/>
+    - docker build 다시 실행하지 않음 <br/>
+    - docker rm 하지 않음 <br/>
+    - docker run 다시 실행하지 않음 <br/>
+    - 그냥 바인드 마운트 한 다음에 바로 app/index.html 수정함 <br/>
     </p>
 </body>
 </html>
