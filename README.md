@@ -4,6 +4,37 @@
 * 터미널 조작 로그: 터미널에서 수행한 핵심 명령과 출력 결과를 기술문서(README.md)에 기록한다
 * README.md만 보고도 전체 과정을 **재현**할 수 있도록 구성한다.
 
+---
+
+## 평가 목차
+**기능 동작 검증**
+- [터미널에서 기본 명령어로 폴더/파일 생성,이동,삭제 수행 흔적이 았는가?](#eval-terminal)
+- [파일 권한 변경 결과가 확인되는가?](#eval-permission)
+- [`docker --version`이 출력되고, Docker가 동작 가능한 상태인가?](#eval-docker-status)
+- [`Docker run hello-world`가 정상 실행되는가?](#eval-hello-world)
+- [이미지/컨테이너 목록 확인 및 정리 흔적이 있는가?](#eval-docker-management)
+- [Dockerfile로 이미지 빌드가 가능한가?](#eval-docker-build)
+- [매핑된 포트로 접속이 가능한가?](#eval-port-mapping)
+- [Docker 볼륨 데이터가 컨테이너 삭제 후에도 유지되는가?](#eval-volume)
+- [Git 설정 및 GitHub 연동이 확인 되는가?](#eval-git)
+
+**동작 구조 설계**
+- [프로젝트 디렉토리 구조를 어떤 기준으로 구성했는지 설명할 수 있는가?](#eval-project-structure)
+- [포트/볼륨 설정을 어떤 방식으로 재현 가능하게 정리했는지 설명할 수 있는가?](#eval-reproducibility)
+
+**핵심 기술 원리 적용**
+- [이미지와 컨테이너의 차이를 "빌드/실행/변경" 관점에서 구분해 설명할 수 있는가?](#eval-image-container)
+- [컨테이너 내부 포트로 직접 접속할 수 없는 이유와 필요한 이유를 설명할 수 있는가?](#eval-port-concept)
+- [절대 경로/상대 경로를 어떤 상황에서 선택하는지 설명할 수 있는가?](#eval-path)
+- [파일 권한 숫자 표기(예: 755, 644)가 어떤 규칙으로 결정되는지 설명할 수 있는가?](#eval-permission-number)
+
+**심층 인터뷰**
+- [호스트 포트가 이미 사용중이라 포트 매핑이 실패한다면, 어떤 순서로 원인을 진단할지 설명할 수 있는가?](#eval-port-troubleshooting)
+- [컨테이너 삭제 후 데이터가 사라진 경험이 있다면, 이를 방지하기 위한 대안을 설명할 수 있는가?](#eval-data-loss)
+- [이 미션에서 가장 어려웠던 지점과, 해결 과정(가설->확인->조치)을 근거와 함께 설명할 수 있는가?](#eval-troubleshooting)
+
+---
+
 ## 프로젝트 개요  
 ### 미션 목표(요약)  
 
@@ -11,7 +42,7 @@
 * 터미널을 이용한 **파일 및 권한 관리**, **Docker**를 이용한 **컨테이너 기반 개발 환경 구축**,  
   Git/GitHub를 이용한 버전 관리와 협업 환경을 직접 구성하고 검증한다.
 * **Dockerfile**을 작성하여 **커스텀 이미지**를 생성하고, **포트 매핑**을 통해 웹 서버를 실행한다.  
-* **바인트 마운트**와 Docker **볼륨**을 활용하여 **소스코드 변경 반영**과 **데이터 영속성**을 확인한다.
+* **바인드 마운트**와 Docker **볼륨**을 활용하여 **소스코드 변경 반영**과 **데이터 영속성**을 확인한다.
 * 각 과정의 **실행 결과**와 **로그**를 기록하여 **동일한 환경을 재현**할 수 있도록 문서화한다.
 * 이를 통해 로컬 환경에 종속되지 않는 재현 가능한 개발 환경 구성 방법과 Docker의 이미지, 컨테이너 구조, git 기반 버전 관리의 기본 원리를 학습하는 것을 목표로 한다.
 
@@ -74,17 +105,17 @@
 
 ### 프로젝트 폴더 구조
 
-파일 이름만 보고 내용을 알 수 있도록 작성한다.
+프로젝트 구조는 웹 소스, 문서 증거를 역할별로 분리하는 기준으로 구성함
 
 ```shell
 development-workstation/
-├── app/
+├── app/ # Nginx가 제공할 정적 웹 소스 저장 디렉터리
 │   └── index.html  # 웹 페이지
-├── assets/ # README 이미지
-├── .gitignore # git이 추적하지 않을 목록
-├── Dockerfile
+├── assets/ # README에 첨부할 스크린샷
+├── .gitignore # git이 추적 제외 목록
+├── Dockerfile # 커스텀 이미지 제작 설명서
 ├── .dockerignore # docker 이미지 빌드에 포함시키지 않을 목록
-└── README.md
+└── README.md # 실습 절차 기록
 ```
 
 ## 실행 환경 확인
@@ -200,7 +231,7 @@ git version 2.53.0
 - Linux + Docker Engine: 리눅스에 Docker Engine만 설치해서 사용
   
 ![OrbStack](/assets/OrbStack.png)
-과제 환경에서는 시슽템 보안 정책상 sudo 권한 사용이 제한 되어있어,
+과제 환경에서는 시스템 보안 정책상 sudo 권한 사용이 제한 되어있어,
 Docker 직접 설치 및 데몬 제어에 제약이 있어
 과제에 명시되어 있는 대로 **OrbStack**을 활용함
 
@@ -212,8 +243,10 @@ OrbStack 애플리케이션을 실행 후,
 > **주의:** Docker Desktop과 OrbStack은 동시에 실행하지 않는다.  
 > 두 프로그램을 동시에 실행하면 Docker CLI가 어느 Docker Engine에 연결되어 있는지 혼동할 수 있으므로, 실습 시에는 하나의 Docker 실행 환경만 사용한다.
 
+<a id="eval-terminal"></a>
 
-## 터미너 기본 조작 실습
+## 터미널 기본 조작 실습
+
 | 작업       | 명령어           | 의미                   |
 | -------- | ------------- | -------------------- |
 | 현재 위치 확인 | `pwd`         | 현재 작업 디렉터리의 절대 경로 출력 |
@@ -477,6 +510,8 @@ drwxr-xr-x  9 chl986398639863  chl986398639863  288  8  4 12:54 ..
 
 ---
 
+<a id="eval-git"></a>
+
 ## Git 설정 및 GitHub 연동
 
 ### 실행 명령
@@ -499,6 +534,12 @@ rm -rf docker-workstation
 #### 실행 화면
 ![git](./assets/git.png)
 
+```bash
+git remote -v
+origin	https://github.com/ChoiMari/docker-workstation.git (fetch)
+origin	https://github.com/ChoiMari/docker-workstation.git (push)
+```
+
 ---
 
 ## VSCode와 GitHub 연동
@@ -506,6 +547,8 @@ rm -rf docker-workstation
 ![vscode-github](./assets/vs-github.png)
 
 ---
+
+<a id="eval-path"></a>
 
 ## 절대 경로와 상대 경로 
 절대 경로와 상대 경로의 차이를 예시를 들어 설명하기
@@ -593,6 +636,13 @@ cd ..
 
 ---
 
+### 경로 선택 기준
+- 현재 위치와 관계없이 항상 같은 파일을 지정해야 되는 경우 절대 경로 사용
+- 같은 프로젝트 안에서 파일을 참조할 때는 다른 환경에서도 재사용 하기 쉬운 상대 경로 사용 
+
+
+---
+
 ### 절대 경로와 상대 경로 비교
 
 | 구분 | 절대 경로 | 상대 경로 |
@@ -603,6 +653,8 @@ cd ..
 | 특징 | 항상 동일한 위치를 가리킨다. | 현재 위치에 따라 경로가 달라진다. |
 
 ---
+
+<a id="eval-permission"></a>
 
 ## 파일 권한
 Linux와 macOS에서는 파일과 디렉터리에 권한이 존재하며, 이를 통해 누가 파일을 읽고, 수정, 실행할 수 있는지 제어함
@@ -622,7 +674,7 @@ Linux와 macOS에서는 파일과 디렉터리에 권한이 존재하며, 이를
 ls -l
 ```
 * 실행 결과
-* 
+
 ```bash
 total 32
 drwxr-xr-x   3 chl986398639863  chl986398639863     96  8  4 09:54 app
@@ -655,6 +707,8 @@ drwxr-xr-x  15 chl986398639863  chl986398639863    480  8  4 13:14 assets
 - `-` : 일반 파일
 - `d` : 디렉터리
 - `l` : 심볼릭 링크(바로가기 개념)
+
+<a id="eval-permission-number"></a>
 
 ### 숫자 권한(755, 644)의 의미
 
@@ -809,6 +863,8 @@ docker context show
 
 ---
 
+<a id="eval-docker-management"></a>
+
 ## Docker 기본 운영 명령 수행 & 컨테이너 실행 실습
 
 ### Ubuntu 이미지 다운로드
@@ -827,10 +883,12 @@ docker images
 ```
 ![도커이미지목록](./assets/docker-images.png)
 
+<a id="eval-hello-world"></a>
+
 ### hello-world 실행
 
 ```bash
-# 도커가 정상 설지, 작동되는지 기본적인 테스트 명령어
+# 도커가 정상 설치, 작동되는지 기본적인 테스트 명령어
 docker run hello-world
 # 실행하면 일어나는 일
 # 1. hello-world 실행해줘
@@ -846,7 +904,7 @@ docker run hello-world
 ```bash
 # 우분투 이미지로 ubuntu-test라는 새 컨테이너를 생성하고,
 # 터미널 입력이 가능한 bash 셸을 실행해 내부 접속
-docker run -it --name - ubuntu-test ubuntu bash
+docker run -it --name ubuntu-test ubuntu bash
 
 #docker run 명령은 컨테이너 생성 + 시작
 # 새 컨테이너 생성하고 즉시 실행해라
@@ -1013,13 +1071,15 @@ docker rmi ubuntu
 
 ---
 
+<a id="eval-docker-build"></a>
+
 ## Dockerfile 기반 커스텀 이미지 제작
 
 ### (A) 웹 서버 베이스 이미지 활용(예: NGINX/Apache 등) + 정적 콘텐츠/설정만 교체
 
 #### app/index.html 생성
 ```bash
-# 프로젝트 루트에 app 디렉토리 생성
+# 프로젝트 루트에 app 디렉터리 생성
 mkdir app
 touch app/index.html # 정적 html 파일 생성
 ```
@@ -1125,7 +1185,7 @@ touch Dockerfile
 ```
 
 내용:
-```bash
+```Dockerfile
 # FROM: 어떤 베이스 이미지에서 시작할지 지정함
 # 정적 HTML 페이지를 서비스하는 웹 서버를 만드는 것이 목표여서
 # 공식 Nginx 이미지 중 Alpine Linux 기반 경량 이미지 사용
@@ -1142,7 +1202,7 @@ LABEL org.opencontainers.image.description="Custom Nginx image for Docker workst
 ENV APP_ENV=development
 
 # Host의 app/ 폴더 안에 있는 정적 파일을
-# 이미니 내부의 엔진엑스 기본 웹 문서 경로로 복사함
+# 이미지 내부의 엔진엑스 기본 웹 문서 경로로 복사함
 # COPY: 컴퓨터에 있는 소스코드나 파일을 이미지 내부로 복사
 COPY app/ /usr/share/nginx/html/
 
@@ -1211,7 +1271,7 @@ Dockerfile의 COPY, ADD에서 사용
 docker images 
 # 또는
 docker images codyssey-web
-docker images ls codyssey-web 
+docker image ls codyssey-web 
 ```
 ![도커이미지생성확인](./assets/docker-image-build.png)
 
@@ -1288,7 +1348,7 @@ http://localhost:8080
 #### curl 접속 확인
 컬이라고 읽음 클라이언트 URL의 줄임말
 curl은 브라우저 없이 HTTP 요청을 보내는 프로그램
-브라우저는 HTML을 예쁘게 화면 출력(랜더링)
+브라우저는 HTML을 예쁘게 화면 출력(렌더링)
 curl은 HTML 그대로 터미널에 출력
 
 ```bash
@@ -1577,8 +1637,5 @@ docker exec volume-test-2 \
 ---
 
 ## 이미지와 컨테이너 차이 정리
-Docker이미지: 템플릿
-컨테이너: 이미지로부터 생성된 실행 인스턴스
-하나의 이미지로 여러 컨테이너를 생성할 수 있음
-Dockerfile은 커스텀 이미지를 만드는 절차를 문서화한 파일
+
 
