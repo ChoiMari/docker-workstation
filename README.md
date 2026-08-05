@@ -501,6 +501,12 @@ rm -rf docker-workstation
 
 ---
 
+## VSCode와 GitHub 연동
+* VSCode 좌측 Source Control 메뉴
+![vscode-github](./assets/vs-github.png)
+
+---
+
 ## 절대 경로와 상대 경로 
 절대 경로와 상대 경로의 차이를 예시를 들어 설명하기
 
@@ -1422,4 +1428,157 @@ docker run -d \
 > :ro는 컨테이너에서 읽기 전용으로 마운트하는 옵션(실수로 컨테이너에서 수정, 삭제 못하게 일부러 막음)
 
 ---
+
+## Docker 볼륨 영속성 실습
+### 들어가기전 개념 정리
+#### 영속성(Persistence)이란?
+  * 프로그램이 종료되거나 컨테이너가 삭제되어도 데이터가 계속 유지되는 성질
+  * 컴퓨터 재부팅해도 파일 그대로 있음 -> 영속성
+  * 반대말은 휘발성
+    * 컴퓨터를 끄는 순간 데이터 사라짐,,
+
+#### Docker 컨테이너는 기본적으로 휘발성이다.
+* 컨테이너 삭제 시 그 안의 데이터도 같이 삭제됨
+* 이게 왜 문제인가?
+  * 예) 데이터베이스를 컨테이너로 띄웠는데 삭제 하면,, DB에 저장되었던
+  데이터 같이 날아감,,-> 서비스 망함..
+
+->  그래서 도커 볼륨이 등장한 것
+
+#### Docker Volume
+volume: 컨테이너 밖에 데이터를 저장하는 공간
+볼륨 안에 데이터를 저장시켜서
+컨테이너를 삭제 해도
+볼륨은 안지워짐 -> 데이터도 남아있음
+
+새 컨테이너를 만들면? 같은 볼륨에 연결하면
+데이터는 예전 그대로 -> 영속성
+
+---
+
+### Docker Volume 생성
+
+```bash
+docker volume create codyssey-data
+```
+
+목록 확인:
+
+```bash
+docker volume ls
+```
+
+상세 확인:
+
+```bash
+docker volume inspect codyssey-data
+```
+
+![볼륨생성](./assets/create-volume.png)
+
+### 컨테이너에 Volume 연결
+ubuntu:24.04 이미지로 volume-test-1이라는 컨테이너를 백그라운드에서 생성·실행하고, Docker Volume codyssey-data를 컨테이너 내부 /data에 연결한 뒤 sleep infinity 프로세스를 실행해 컨테이너가 종료되지 않도록 유지함
+ ```bash
+ # -v codyssey-data:/data
+ # -v 볼륨이름:컨테이너내부경로
+ # Docker Volume codyssey-data를 컨테이너의 /data에 연결
+ # sleep infinity 무한 대기해라
+ # 컨테이너를 계속 켜 두는 역할
+ # 우분투 이미지는 엔진엑스처럼 계속 실행되는 서버 프로세스 포함하지 않아서 사용함
+docker run -d \
+  --name volume-test-1 \
+  -v codyssey-data:/data \
+  ubuntu:24.04 \
+  sleep infinity
+ ```
+
+ ![컨테이너에볼륨연결](./assets/container-volume.png)
+
+ ```bash
+Docker Volume
+codyssey-data
+       │
+       │ 연결
+       ▼
+컨테이너 내부
+/data
+ ```
+ 따라서 컨테이너 안(/data)에서 파일을 쓰면
+ 실제 데이터는 연결된 볼륨(codyssey-data)에 저장된다.
+
+```bash
+컨테이너 안에서 보이는 경로
+/data/message.txt
+
+실제 저장 대상
+codyssey-data Volume
+```
+
+---
+
+### Volume에 데이터 생성
+```bash
+# 컨테이너 내부 /data에 파일 생성
+docker exec volume-test-1 \
+  bash -lc "echo 'persistent data from container 1' > /data/message.txt"
+
+# 생성된 파일 목록 확인
+docker exec volume-test-1 \
+  bash -lc "ls -la /data"
+```
+
+![볼륨에데이터생성](./assets/volume-data.png)
+
+---
+
+### 컨테이너 삭제
+```bash
+docker rm -f volume-test-1
+
+# 삭제 확인(종료된 컨테이너까지 확인)
+docker ps -a
+
+# 볼륨 존재 확인
+docker volume ls
+```
+
+![컨테이너삭제](./assets/container-rm.png)
+
+---
+
+### 새 컨테이너에 동일 볼륨 연결
+
+```bash
+docker run -d \
+  --name volume-test-2 \
+  -v codyssey-data:/data \
+  ubuntu:24.04 \
+  sleep infinity
+```
+
+### Docker 볼륨 영속성 검증
+
+새 컨테이너에서 기존 파일을 확인함
+
+```bash
+docker exec volume-test-2 \
+  bash -lc "cat /data/message.txt"
+```
+![볼륨영속성확인](./assets/volume-persistence.png)
+
+컨테이너 삭제 전/후로 데이터를 확인하여 데이터가 유지됨을 증명
+
+> <볼륨 개념 정리>
+> 볼륨 데이터는 컨테이너 파일 시스템과 별도로 관리된다
+> 컨테이너가 삭제되어도 볼륨은 삭제 되지 않음
+> 새로운 컨테이너에 동일 볼륨을 연결하면 기존 데이터를 다시 사용 가능
+> 데이터베이스, 업로드 파일, 서비스 상태 데이터 저장에 적합
+
+---
+
+## 이미지와 컨테이너 차이 정리
+Docker이미지: 템플릿
+컨테이너: 이미지로부터 생성된 실행 인스턴스
+하나의 이미지로 여러 컨테이너를 생성할 수 있음
+Dockerfile은 커스텀 이미지를 만드는 절차를 문서화한 파일
 
