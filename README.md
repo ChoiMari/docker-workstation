@@ -5,7 +5,6 @@
 * README.md만 보고도 전체 과정을 **재현**할 수 있도록 구성한다.
 
 ## 프로젝트 개요  
-
 ### 미션 목표(요약)  
 
 * 이 과제는 **Linux CLI, Docker, Git/GitHub**를 활용하여, **개발 워크스테이션을 구축**하는 것을 목표로 한다.
@@ -82,8 +81,9 @@ development-workstation/
 ├── app/
 │   └── index.html  # 웹 페이지
 ├── assets/ # README 이미지
-├── .gitignore
+├── .gitignore # git이 추적하지 않을 목록
 ├── Dockerfile
+├── .dockerignore # docker 이미지 빌드에 포함시키지 않을 목록
 └── README.md
 ```
 
@@ -1005,3 +1005,292 @@ docker rmi ubuntu
 
 ![이미지삭제](./assets/docker-rmi.png)
 
+---
+
+## Dockerfile 기반 커스텀 이미지 제작
+
+### (A) 웹 서버 베이스 이미지 활용(예: NGINX/Apache 등) + 정적 콘텐츠/설정만 교체
+
+#### app/index.html 생성
+```bash
+# 프로젝트 루트에 app 디렉토리 생성
+mkdir app
+touch app/index.html # 정적 html 파일 생성
+```
+
+#### app/index.html 작성
+다음과 같이 VS Code 작성함
+```bash 
+cat app/index.html # 내용 확인
+```
+```html
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Docker Workstation</title>
+</head>
+<body>
+    <h1>Docker Workstation Assignment</h1>
+
+    <p>Custom Nginx image is running successfully.</p>
+
+    <ul>
+        <li>Base image: nginx:alpine</li>
+        <li>Application version: 1.0</li>
+        <li>Environment: development</li>
+    </ul>
+
+    <p id="mount-message">
+        This page was copied into the Docker image.
+    </p>
+</body>
+</html>% 
+```
+
+#### .dockerignore 작성
+* 도커 이미지를 만들 때 현재 폴더 전체를 Docker에게 보내는 명령을 치는데, 안에 있는 파일들을 전부 압축해서 도커 엔진으로 보내게 됨
+  이걸 Build Context라고 함
+  그럼 문제가 뭐냐.. 현재 프로젝트 안에
+  `.git`, `assets`, `README.md` 같은 것들도 있음
+  이것들은 Docker 이미지 만들 때 필요가 없다,,
+  즉, 필요 없는 것까지 도커 엔진으로 보내져서
+  이미지를 찍게 되면 불필요 + 빌드 느려짐
+  그래서 .dockerignore를 작성하는 것!
+* Docker에게 보내지 말아야할 파일 목록
+(도커가 이미지 빌드할 때 포함시키지 않을 목록)
+* .dockerignore는 불필요한 파일이 Docker 빌드 엔진으로 전송되는 것을 막는다.
+
+프로젝트 루트에 작성한다.
+
+```bash
+touch .dockerignore
+```
+
+내용: 
+```text
+.git/
+README.md
+assets/
+.vscode/
+.idea/
+.DS_Store
+```
+
+#### .gitignore와 .dockerignore 차이
+| 항목    | `.gitignore`       | `.dockerignore`                     |
+| ----- | ------------------ | ----------------------------------- |
+| 대상    | Git                | Docker Build                        |
+| 목적    | Git에 추적하지 않을 파일 지정 | Docker Build Context에 포함하지 않을 파일 지정 |
+| 적용 시점 | `git add`          | `docker build`                      |
+| 효과    | Git 저장소에 올라가지 않음   | Docker Engine으로 전송되지 않음             |
+
+---
+
+### Dockerfile 작성
+* Docker 파일이란? 
+  * docker 이미지를 만드는 절차를 작성한 텍스트 파일
+  * docker는 이 파일을 위에서 아래로 읽고, 베이스 이미지 위에 파일 복사, 패키지 설치, 환경 변수 설정, 실행 명령 같은 작업을 적용하여 새 이미지를 만든다. 
+  * docker 공식 문서에서도 Dockerfile을 컨테이너 이미지를 만들기 위한 명령을 담는 텍스트 문서로 설명함
+  * 도커파일에 적힌 명령어들을 한 줄씩 순서대로 실행해서 최종 도커 이미지를 만드는 것 (컨테이너를 만들 이미지의 제작 설명서)
+
+```bash
+Dockerfile
+이미지를 만드는 제작 설명서
+        ↓ docker build
+
+Docker Image
+컨테이너 실행에 필요한 읽기 전용 템플릿
+        ↓ docker run
+
+Docker Container
+이미지를 실제로 실행한 인스턴스
+
+```
+
+프로젝트 루트에서 Dockerfile 생성
+(다른 이름도 가능하지만 그럼 빌드할 때 직접 지정해야 함)
+```bash
+touch Dockerfile
+```
+
+내용:
+```bash
+# FROM: 어떤 베이스 이미지에서 시작할지 지정함
+# 정적 HTML 페이지를 서비스하는 웹 서버를 만드는 것이 목표여서
+# 공식 Nginx 이미지 중 Alpine Linux 기반 경량 이미지 사용
+# 엔진엑스는 웹서버 프로그램
+FROM nginx:alpine
+
+# 이미지의 이름, 목적을 식별하기 위한 OCI 표준 메타데이터를 추가한다.
+LABEL org.opencontainers.image.title="docker-workstation-web"
+LABEL org.opencontainers.image.description="Custom Nginx image for Docker workstation assignment"
+
+# ENV: 환경변수 설정
+# 현재 이미지가 어떤 실행 환경(개발, 검증, 운영 등)에서 동작하는지
+# 컨테이너 내부에서 환경 정보 확인 가능
+ENV APP_ENV=development
+
+# Host의 app/ 폴더 안에 있는 정적 파일을
+# 이미니 내부의 엔진엑스 기본 웹 문서 경로로 복사함
+# COPY: 컴퓨터에 있는 소스코드나 파일을 이미지 내부로 복사
+COPY app/ /usr/share/nginx/html/
+
+# 컨테이너가 80번 포트를 사용한다는 정보 기록
+# 이건 메타데이터일 뿐,,
+# 실제 포트 매핑이 필요함
+EXPOSE 80
+
+# 헬스체크: 컨테이너가 실제로 살아있는지
+# 주기적으로 체크하는것
+# 10초마다 localhost로 요청 보내서 
+# 반응이 3초 내에 안오면 실패로 간주
+# 연속 3번 실패시 컨테이너 상태를 unhealthy로 변경
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget -qO- http://localhost/ || exit 1
+```
+
+#### Dockerfile 명령 설명
+| 명령            | 역할                  |
+| ------------- | ------------------- |
+| `FROM`        | 베이스 이미지 지정          |
+| `LABEL`       | 이미지 메타데이터 기록        |
+| `ENV`         | 컨테이너 내부 환경 변수 설정    |
+| `COPY`        | 호스트 파일을 이미지 내부로 복사  |
+| `EXPOSE`      | 컨테이너가 사용하는 포트 정보 기록 |
+| `HEALTHCHECK` | 서비스 정상 동작 여부 검사     |
+
+> EXPOSE 80은 이미지가 80번 포트를 사용한다는 메타데이터일 뿐이다. 호스트에서 접속하려면 docker run -p 호스트포트:컨테이너포트 방식의 실제 포트 매핑이 필요하다.
+
+---
+
+### 커스텀 이미지 빌드
+Dockerfile이 있는 프로젝트 루트에서 실행함
+```bash
+# 커스텀 이미지 빌드
+# docker build [옵션] <빌드 컨텍스트>
+docker build -t codyssey-web:1.0 .
+# docker: docker CLI 실행
+# build: Dockerfile을 이용해 이미지 생성 명령
+# -t: 생성할 이미지의 이름(Tag)을 지정하는 옵션
+# codyssey-web:1.0 이미지 이름과 태그
+# . : 현재 디렉터리를 빌드 컨텍스트로 사용(-> 도커엔진으로 보냄)
+# 빌드 컨텍스트: docker가 이미지를 만들 때 접근할 수 있도록 넘겨주는 파일 범위(이 범위에 있는 걸로 이미지 빌드에 사용하게 넘긴다)
+```
+**명령 전체를 한 문장으로 해석하면**
+현재 디렉터리(.)의 Dockerfile을 이용하여 Docker 이미지를 생성하고, 생성된 이미지의 이름을 codyssey-web, 태그를 1.0으로 지정한다.
+
+* 실행결과:
+현재 디렉터리의 `Dockerfile`을 기반으로 `codyssey-web:1.0` 이미지가 생성된다.
+
+```text
+현재 디렉터리(.)
+        ↓
+.dockerignore 확인
+        ↓
+제외되지 않은 파일을 빌드 컨텍스트로 구성
+        ↓
+Dockerfile의 COPY, ADD에서 사용
+        ↓
+이미지 생성
+
+```
+
+#### 이미지 생성 확인
+```bash
+docker images 
+# 또는
+docker images codyssey-web
+docker images ls codyssey-web 
+```
+![도커이미지생성확인](./assets/docker-image-build.png)
+
+---
+
+### 포트 매핑 실습
+커스텀 이미지를 호스트 8080 포트에 연결
+```bash
+docker run -d \
+  --name codyssey-web-8080 \
+  -p 8080:80 \
+  codyssey-web:1.0
+  # docker run: 새로운 컨테이너를 생성하고 실행
+  # 지정한 이미지가 local에 존재하지 않으면
+  # 자동으로 docker hub 같은 저장소에서 pull 받은 뒤 실행함
+  # -d: 백그라운드에서 실행한다는 옵션
+  # --name: 실행될 컨테이너에 이름 부여
+  # 설정 안할 시 임의로 부여됨
+  # -p: 8080:80 포트포워딩 host컴퓨터의 8080포트와
+  # 컨테이너 내부의 80포트를 연결함
+  # 도커 컨테이너 내부 네트워크는 기본적으로 외부와 격리되어있음
+  # 사용자가 브라우저 주소창에 http://localhost:8080으로 접속하면
+  # 호스트의 8080번 포트가 이 요청을 받아서
+  # 컨테이너 내부의 80포트로 전달해줌
+  # codyssey-web:1.0 컨테이너로 생성할 이미지 이름, 태그번호
+```
+
+```bash
+chl986398639863@c5r5s7 docker-workstation % docker run -d --name codyssey-web-8080 -p 8080:80 codyssey-web:1.0
+e8745cc3935b26c1aa5145b1e9c5627d82820225c7dbdf9cf11328d4e887af5c
+chl986398639863@c5r5s7 docker-workstation % docker ps
+CONTAINER ID   IMAGE              COMMAND                   CREATED          STATUS                    PORTS                                     NAMES
+e8745cc3935b   codyssey-web:1.0   "/docker-entrypoint.…"   11 seconds ago   Up 14 seconds (healthy)   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   codyssey-web-8080
+```
+
+![docker-p.png](./assets/docker-p.png)
+
+
+- 이 이미지는 nginx:alpine을 기반으로 했기 때문에,
+컨테이너가 시작될 때 Nginx 웹 서버가 실행됨
+```bash
+# 흐름
+codyssey-web:1.0 이미지
+        ↓
+새 컨테이너 생성
+        ↓
+Nginx 실행
+        ↓
+컨테이너 내부 80번 포트에서 대기
+        ↓
+호스트의 8080 포트와 연결
+
+# 그래서 브라우저에서 다음 주소로 접속하면
+http://localhost:8080
+# 컨테이너 안의 엔진엑스가 다음 파일을 응답함
+/usr/share/nginx/html/index.html
+# 이 파일은 Dockerfile의 COPY로 복사했던
+app/index.html
+```
+
+#### 브라우저 접속
+주소
+
+```text
+http://localhost:8080
+```
+![](assets/i15pmg3.png)
+
+#### curl 접속 확인
+컬이라고 읽음 클라이언트 URL의 줄임말
+curl은 브라우저 없이 HTTP 요청을 보내는 프로그램
+브라우저는 HTML을 예쁘게 화면 출력(랜더링)
+curl은 HTML 그대로 터미널에 출력
+
+```bash
+curl -i http://localhost:8080
+```
+
+실행 결과
+
+```text
+HTTP/1.1 200 OK
+Server: nginx/1.31.3
+Date: Wed, 05 Aug 2026 09:14:02 GMT
+Content-Type: text/html
+Content-Length: 565
+Last-Modified: Wed, 05 Aug 2026 05:23:35 GMT
+```

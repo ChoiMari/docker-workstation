@@ -1,0 +1,6 @@
+.git/
+README.md
+assets/
+.vscode/
+.idea/
+.DS_Store
